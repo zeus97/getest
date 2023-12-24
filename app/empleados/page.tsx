@@ -4,23 +4,51 @@ import { actualizarEstado, deleteEmpleado, getEmpleados } from '@/utils/services
 import React, {useState, useEffect} from 'react'
 import './page.css'
 import EditForm from '@/components/EditForm'
+import PaginationComponent from '@/components/PaginationComponent'
+import SearchForm from '@/components/SearchForm'
 
 function  EmpleadosPage() {
 
     const [empleados, setEmpleados] = useState<EmpleadosResponse[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(false)
     const [modalEditar, setModalEditar] = useState<boolean>(false);
     const [editValues, setEditValues] = useState({
       id:'',
       nombre:'',
       fechaDeNacimiento:'',
       cargo:1
-    })
+    });
+    const [searchParams, setSearchParams] = useState<any>({})
 
-    const fecthEmpleados = async ()=>{
+    
 
-      getEmpleados().then((data)=>{
-        console.log(data)
-        setEmpleados(data)})
+    //Pagination
+    const [currentPage, setcurrentPage] = useState<number>(1);
+    const [totalElements, setTotalElements] = useState<number>(0);
+    const [pageSize, setPageSize] = useState<number>(10);
+
+    
+
+    
+    const fecthEmpleados = async (page:number,id?:string,nombre?:string,cargo?:string)=>{
+      setIsLoading(true);
+      getEmpleados(currentPage,id,nombre,cargo)
+      .then((data)=>{
+        if(data){
+          setEmpleados(data.content);
+          setTotalElements(data.totalElements);
+          setPageSize(data.size);
+
+        }
+      }).catch((error)=>{console.log(error)})
+      .finally(()=>{setIsLoading(false)})
+    };
+
+    const handleSearch = (params:any) => {
+      // Actualizar el estado de los parámetros de búsqueda y volver a la primera página
+      setSearchParams(params);
+      setcurrentPage(1);
+      fecthEmpleados(currentPage,params.searchID,params.searchNombre,params.searchCargo);
     };
 
     const getFormattedDate = (date:number):string =>{
@@ -35,16 +63,29 @@ function  EmpleadosPage() {
 
 
     useEffect(()=>{
-        fecthEmpleados();
-        console.log(empleados)
+        fecthEmpleados(currentPage,searchParams.searchID,searchParams.searchNombre,searchParams.searchCargo);
         
-    },[])
+    },[currentPage])
 
-
+    if(isLoading){
+      return (
+        <div className="d-flex justify-content-center mt-4">
+          <div className="spinner-border" role="status">
+            <span className="sr-only"></span>
+          </div>
+        </div>
+      )
+    }
 
   return (
     <section className='empleados-page'>
-      <table className='mt-3'>
+      <SearchForm
+      onSearch={handleSearch}
+      />
+      {empleados.length <= 0  ?
+      <h3 className='mt-3'>No hay resultados</h3>:
+      
+      <table className='mt-3 mb-3'>
         
           <thead>
             <tr>
@@ -86,7 +127,7 @@ function  EmpleadosPage() {
                 onClick={()=>{
                   deleteEmpleado(e.id).then((res)=>{
                     alert("Empleado eliminado");
-                    fecthEmpleados();
+                    fecthEmpleados(currentPage);
                   }).catch((error)=>{console.log(error)})
                   }
                 }
@@ -97,7 +138,7 @@ function  EmpleadosPage() {
                 onClick={()=>{
                   actualizarEstado(e.id).then((res)=>{
                     alert("Estatus actualizado");
-                    fecthEmpleados();
+                    fecthEmpleados(currentPage);
                   }).catch((error)=>{console.log(error)})
                 }}>cambiar estatus</td>
               </tr> 
@@ -109,6 +150,15 @@ function  EmpleadosPage() {
         
         
       </table>
+      }
+      <PaginationComponent
+      className='pagination-bar'
+      currentPage={currentPage}
+      totalCount={totalElements}
+      siblingCount={1}
+      pageSize={pageSize}
+      onPageChange={(page)=>{setcurrentPage(page)}} />
+
       { modalEditar &&
         <div className='edit-modal'>
           <div className='edit-modal-box'>
@@ -117,7 +167,7 @@ function  EmpleadosPage() {
             <EditForm
             initialValues={editValues}
             closeModal={closeModal}
-            updateTable={fecthEmpleados} />
+            updateTable={()=>fecthEmpleados(currentPage)} />
 
           </div>
 

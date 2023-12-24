@@ -1,0 +1,27 @@
+.search-form{
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+}
+.search-form input{
+    margin-right: 10px;
+}
+.search-form button{
+    border: none;
+    border-radius: 50%;
+    padding: 5px 10px;
+    margin-left: 10px;
+    background-color: transparent;
+   
+}
+.search-form button:hover{
+    background-color: #cacaca;
+}
+.search-form i{
+    font-size: 20px;
+    
+    cursor: pointer;
+}
+.search-form:hover{
+    color: #949494;
+}

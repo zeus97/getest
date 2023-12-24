@@ -1,16 +1,29 @@
-import { Empleado, EmpleadosResponse } from "@/interfaces/Empleado.interface";
+import { Empleado, EmpleadosResponse, EmpleadosResponses } from "@/interfaces/Empleado.interface";
 
 
 
 
-export const getEmpleados = async()=>{
-    try{
-        const response = await fetch("/api/empleados");
-        const data = response.json()
-        return data
-    }catch(error){
-        console.log(error)
-    }
+export const getEmpleados = async(page:number,id?:string,nombre?:string,cargo?:string):Promise<EmpleadosResponses | undefined>=>{
+   
+    const params: Record<string, string | number> = {
+        page,
+        ...(id && { id }),         
+        ...(nombre && { nombre }), 
+        ...(cargo && { cargo }),   
+      };
+      const queryParams = new URLSearchParams(params as Record<string, string>);
+      const url = `/api/empleados?${queryParams.toString()}`;
+
+
+    
+        try{
+            const response = await fetch(url);
+            
+            return response.json()
+        }catch(error){
+            console.log(error)
+        }
+  
 };
 
 export const createEmpleado = async (empleado:Empleado)=>{
